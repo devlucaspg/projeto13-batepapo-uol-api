@@ -86,3 +86,26 @@ app.post ('/messages', async (req, res) => {
 		res.sendStatus(500);
 	}	
 });
+
+/* app.get ('/messages', async (req, res) => {
+	try{
+
+	} catch (err) {
+		res.sendStatus(500);
+	}
+}); */
+
+app.post ('/status', async (req, res) => {
+	const { user } = req.headers;
+
+	try {
+		const participant = await db.collection("participants").findOne({name: user});
+
+		if (participant.name === user) {
+			await db.collection("participants").updateOne({name: user}, {$set: {lastStatus: Date.now()}});
+			res.sendStatus(200);
+		}
+	} catch (err) {
+		res.sendStatus(404);
+	}
+});
