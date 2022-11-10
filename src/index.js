@@ -43,7 +43,19 @@ app.post ('/participants', async (req, res) => {
 		return res.sendStatus(409);
 	}
 
-	await db.collection("participants").insertOne({name, lastStatus: Date.now()});
+	try {
+		await db.collection("participants").insertOne({name, lastStatus: Date.now()});
+		res.sendStatus(201);
+	} catch (err) {
+		res.sendStatus(500);
+	}
+});
 
-	res.sendStatus(201);
+app.get ('/participants', async (req, res) => {
+	try {
+		const participants = await db.collection("participants").find().toArray();
+		res.send(participants);
+	} catch (err) {
+		res.sendStatus(500);
+	}
 });
