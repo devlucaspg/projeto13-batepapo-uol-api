@@ -2,6 +2,7 @@ import express from 'express';
 import dotenv from 'dotenv'
 import cors from 'cors';
 import joi from 'joi';
+import dayjs from 'dayjs';
 import { MongoClient } from 'mongodb';
 
 dotenv.config();
@@ -21,6 +22,7 @@ try {
 	db = mongoClient.db("projeto13-batepapo-uol-api");
 } catch (err) {
 	console.log(err);
+	sendStatus(500);
 }
 
 app.post ('/participants', async (req, res) => {
@@ -44,7 +46,7 @@ app.post ('/participants', async (req, res) => {
 	}
 
 	try {
-		await db.collection("participants").insertOne({name, lastStatus: Date.now()});
+		await db.collection("participants").insert({name, lastStatus: Date.now()});
 		res.sendStatus(201);
 	} catch (err) {
 		res.sendStatus(500);
@@ -58,4 +60,29 @@ app.get ('/participants', async (req, res) => {
 	} catch (err) {
 		res.sendStatus(500);
 	}
+});
+
+app.post ('/messages', async (req, res) => {
+
+	const { to, text, type } = req.body;
+	const from = req.headers.user;
+
+	const schema = joi.object({
+		to: joi.string().min(1).required(),
+		text: joi.string().min(1).required(),
+		type: joi.string().required()
+	});
+
+	schema.validate(req.body);
+	
+	try{
+		const participant = await db.collection("participants").findOne({name: from});
+
+		if (participant.name === from) {
+			await db.collection("messages").insertOne({from, to, text, type, time: dayjs().format('HH:mm:ss')});
+			return res.sendStatus(201);
+		} 
+	} catch (err) {
+		res.sendStatus(500);
+	}	
 });
